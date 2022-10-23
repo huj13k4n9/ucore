@@ -346,7 +346,6 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
 
     ret = -E_NO_MEM;
 
-    pte_t *ptep=NULL;
     /*LAB3 EXERCISE 1: YOUR CODE
     * Maybe you want help comment, BELOW comments can help you finish the code
     *
@@ -364,13 +363,19 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
     *   mm->pgdir : the PDT of these vma
     *
     */
-#if 0
-    /*LAB3 EXERCISE 1: YOUR CODE*/
-    ptep = ???              //(1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
-    if (*ptep == 0) {
-                            //(2) if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
 
+    /*LAB3 EXERCISE 1: YOUR CODE*/
+    // (1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
+    // (2) if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
+    pte_t *ptep = get_pte(boot_pgdir, addr, 1);
+    if (*ptep == 0) {
+        struct Page *p;
+        if ((p = alloc_page()) == NULL)
+            goto failed;
+        page_ref_inc(p);
+        *ptep = page2pa(p) | perm | PTE_P;
     }
+#if 0
     else {
     /*LAB3 EXERCISE 2: YOUR CODE
     * Now we think this pte is a  swap entry, we should load data from disk to a page with phy addr,
@@ -400,4 +405,3 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
 failed:
     return ret;
 }
-
