@@ -239,7 +239,7 @@ qemu: $(UCOREIMG)
 qemu-nox: targets
 	$(V)$(QEMU)  -no-reboot -serial mon:stdio $(QEMUOPTS) -nographic
 
-TERMINAL := gnome-terminal
+TERMINAL := konsole
 
 debug: $(UCOREIMG)
 	$(V)$(QEMU) -S -s -parallel stdio $(QEMUOPTS) -serial null &

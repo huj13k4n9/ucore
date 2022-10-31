@@ -1,7 +1,5 @@
 file bin/kernel
 target remote :1234
-layout asm
-layout regs
 break kern_init
 # break lab1_switch_to_user
 break lab1_switch_to_kernel
