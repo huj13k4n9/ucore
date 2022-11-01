@@ -233,7 +233,7 @@ qemu: $(UCOREIMG) $(SWAPIMG)
 qemu-nox: $(UCOREIMG) $(SWAPIMG)
 	$(V)$(QEMU)  -no-reboot -serial mon:stdio $(QEMUOPTS) -nographic
 
-TERMINAL := konsole
+TERMINAL := gnome-terminal
 
 debug: $(UCOREIMG) $(SWAPIMG)
 	$(V)$(QEMU) -S -s -parallel stdio $(QEMUOPTS) -serial null &

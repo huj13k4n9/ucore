@@ -1,3 +1,5 @@
 file bin/kernel
 target remote :1234
-break *(0xc010506b - 0xc0000000)
+break *0xc01083f3
+layout src
+conti
