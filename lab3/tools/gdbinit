@@ -1,5 +1,5 @@
 file bin/kernel
 target remote :1234
-break *0xc01083f3
+break do_pgfault
 layout src
 conti

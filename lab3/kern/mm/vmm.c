@@ -391,7 +391,7 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
             // (2) According to the mm, addr AND page, setup the map of phy addr <---> logical addr
             //     Need to manually set the vaddr since alloc_page() in swap_in does not set this.
             //     Otherwise the virtual addr of swapped-in page may be unexpected.
-            page->pra_vaddr = addr;   
+            page->pra_vaddr = addr;
             page_insert(boot_pgdir, page, addr, perm); 
             // (3) make the page swappable.
             swap_map_swappable(mm, addr, page, 0);            
