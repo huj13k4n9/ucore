@@ -2,6 +2,7 @@
 #include <swapfs.h>
 #include <swap_fifo.h>
 #include <swap_enhanced_clock.h>
+#include <swap_lru.h>
 #include <stdio.h>
 #include <string.h>
 #include <memlayout.h>
@@ -39,8 +40,9 @@ swap_init(void)
      }
      
 
-     // sm = &swap_manager_fifo;
-     sm = &swap_manager_enhanced_clock;
+     sm = &swap_manager_fifo;
+     // sm = &swap_manager_enhanced_clock;
+     // sm = &swap_manager_lru;
      int r = sm->init();
      
      if (r == 0)

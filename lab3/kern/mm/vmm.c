@@ -368,7 +368,6 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
     // (1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
     // (2) if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
     pte_t *ptep = get_pte(boot_pgdir, addr, 1);
-    cprintf("[*] get_pte in do_pgfault 0x%x, addr 0x%x\n", *ptep, addr);
     if (*ptep == 0x0) {
         if (pgdir_alloc_page(boot_pgdir, addr, perm) == NULL)
             goto failed;

@@ -75,7 +75,6 @@ _enhanced_clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, i
     assert(in_tick==0);
     assert(head->next != head);
 
-    output_pra_list(mm, "_swap_out_victim before, pra_list:");
     // First loop, check the Accessed Bit (whether the page is used)
     while (1) {
         tmp = list_next(tmp);
@@ -85,6 +84,7 @@ _enhanced_clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, i
         pte_t *ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);
         if (*ptep & PTE_A) { // If accessed, clear it.
             *ptep &= ~PTE_A;
+            tlb_invalidate(mm->pgdir, p->pra_vaddr);
             continue;
         }
         // We got the best fit page!
@@ -94,7 +94,6 @@ _enhanced_clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, i
         if (tmp == ptr) break; // Need this to also traverse ptr itself
     }
 
-    output_pra_list(mm, "_swap_out_victim mid, pra_list:");
     // Second loop, check the Dirty Bit (whether the page is modified)
     while (1) {
         tmp = list_next(tmp);
@@ -103,6 +102,7 @@ _enhanced_clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, i
         pte_t *ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);
         if (*ptep & PTE_D) { // If modified, clear it.
             *ptep &= ~PTE_D;
+            tlb_invalidate(mm->pgdir, p->pra_vaddr);
             continue;
         }
         if (!(*ptep & PTE_A) && !(*ptep & PTE_D)) {
@@ -125,7 +125,6 @@ ok: // Delete the victim page from linklist and reset ptr location.
     *ptr_page = p;
     ptr = list_prev(tmp);
     list_del(tmp);
-    output_pra_list(mm, "_swap_out_victim after, pra_list:");
     return 0;
 }
 
@@ -191,7 +190,7 @@ _enhanced_clock_tick_event(struct mm_struct *mm)
 
 struct swap_manager swap_manager_enhanced_clock =
 {
-    .name            = "enhanced clock swap manager",
+    .name            = "Enhanced Clock Swap Manager",
     .init            = &_enhanced_clock_init,
     .init_mm         = &_enhanced_clock_init_mm,
     .tick_event      = &_enhanced_clock_tick_event,
