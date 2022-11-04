@@ -75,51 +75,45 @@ _enhanced_clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, i
     assert(in_tick==0);
     assert(head->next != head);
 
-    // First loop, check the Accessed Bit (whether the page is used)
-    while (1) {
-        tmp = list_next(tmp);
-        if (tmp == &pra_list_head) continue; // Need to skip the head node
-        p = le2page(tmp, pra_page_link);
-        // Check page attr
-        pte_t *ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);
-        if (*ptep & PTE_A) { // If accessed, clear it.
-            *ptep &= ~PTE_A;
-            tlb_invalidate(mm->pgdir, p->pra_vaddr);
-            continue;
+    int i = 1;
+    for (; i <= 3; i++) {
+        while (1) {
+            tmp = list_next(tmp);
+            if (tmp == &pra_list_head) continue; // Need to skip the head node
+            p = le2page(tmp, pra_page_link);
+            // Check page attr
+            pte_t *ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);
+            switch (i) {
+            case 1:   // First loop, check U=0 & M=0 page
+                if (!(*ptep & PTE_A) && !(*ptep & PTE_D))
+                    goto ok;
+                break;
+            case 2:   // Second loop, check U=1 & M=0 page
+                if (*ptep & PTE_D) { // If accessed, clear it.
+                    *ptep &= ~PTE_D;
+                    tlb_invalidate(mm->pgdir, p->pra_vaddr);
+                }
+                if ((*ptep & PTE_A) && !(*ptep & PTE_D))
+                    goto ok;
+                break;
+            case 3:  // Third loop, check the Dirty Bit
+                if (*ptep & PTE_A) { // If modified, clear it.
+                    *ptep &= ~PTE_A;
+                    tlb_invalidate(mm->pgdir, p->pra_vaddr);
+                }
+                if (!(*ptep & PTE_A) && !(*ptep & PTE_D))
+                    goto ok;
+                break;
+            }
+            if (tmp == ptr) break; // Need this to also traverse ptr itself
         }
-        // We got the best fit page!
-        if (!(*ptep & PTE_A) && !(*ptep & PTE_D)) {
-            goto ok;
-        }
-        if (tmp == ptr) break; // Need this to also traverse ptr itself
     }
-
-    // Second loop, check the Dirty Bit (whether the page is modified)
-    while (1) {
-        tmp = list_next(tmp);
-        if (tmp == &pra_list_head) continue;
-        p = le2page(tmp, pra_page_link);
-        pte_t *ptep = get_pte(mm->pgdir, p->pra_vaddr, 0);
-        if (*ptep & PTE_D) { // If modified, clear it.
-            *ptep &= ~PTE_D;
-            tlb_invalidate(mm->pgdir, p->pra_vaddr);
-            continue;
-        }
-        if (!(*ptep & PTE_A) && !(*ptep & PTE_D)) {
-            goto ok;
-        }
-        if (tmp == ptr) break;
-    }
-
+    
     // The worst situation... (all pages are both used and modified)
     // Just use next node of ptr
-    if (list_next(ptr) == &pra_list_head) {  // Needs to take care of head node yet
-        p = le2page(list_next(&pra_list_head), pra_page_link);
-        tmp = list_next(&pra_list_head);
-    } else {
-        p = le2page(list_next(ptr), pra_page_link);
-        tmp = list_next(ptr);
-    }
+    tmp = list_next(
+        list_next(ptr) == &pra_list_head ? &pra_list_head : ptr);
+    p = le2page(tmp, pra_page_link);
     
 ok: // Delete the victim page from linklist and reset ptr location.
     *ptr_page = p;
